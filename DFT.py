@@ -49,7 +49,8 @@ def inverse_fourier_transform(X):
 
 
 second = 2
-fs = 100 * second  # Sampling rate * second
+sampling_rate = 100
+fs = sampling_rate * second  # Total number of samples
 t = np.linspace(0, second, fs)  # Time vector
 
 x = 0
@@ -61,7 +62,7 @@ X1 = fourier_transform(x)
 X2 = np.fft.fft(x)
 x_recon = inverse_fourier_transform(X1)
 
-# equalize magnitude of the Fourier transform with amplitude of the signal
+# Equalize magnitude of the Fourier transform with amplitude of the signal
 X1 /= (fs / 2)
 X2 /= (fs / 2)
 

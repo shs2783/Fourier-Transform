@@ -4,23 +4,52 @@ import matplotlib.pyplot as plt
 def fourier_transform(x):
     N = len(x)
     X = np.zeros(N, dtype=np.complex128)
-    for k in range(N):
-        for n in range(N):
-            X[k] += x[n] * np.exp(-2j * np.pi * k * n / N)
+    
+    ### method 1 (double for loop)
+    # for k in range(N):
+    #     for n in range(N):
+    #         X[k] += x[n] * np.exp(-2j * np.pi * k * n / N)
+
+    ### method 2 (single for loop + vectorization)
+    # vector_n = np.arange(N)
+    # for k in range(N):
+    #     exp = np.exp(-2j * np.pi * k * vector_n / N)
+    #     X[k] = (x * exp).sum()
+    
+    ### method 3 (vectorization + matrix multiplication)
+    vector_n = np.arange(N)
+    vector_k = vector_n.reshape(-1, 1)
+    exp = np.exp(-2j * np.pi * vector_k * vector_n / N)
+    X = np.dot(exp, x)
+
     return X
 
 def inverse_fourier_transform(X):
     N = len(X)
     x = np.zeros(N, dtype=np.complex128)
-    for n in range(N):
-        for k in range(N):
-            x[n] += X[k] * np.exp(2j * np.pi * k * n / N)
-        x[n] /= N
-    return x
+
+    ### method 1 (double for loop)
+    # for n in range(N):
+    #     for k in range(N):
+    #         x[n] += X[k] * np.exp(2j * np.pi * k * n / N)
+
+    ### method 2 (single for loop + vectorization)
+    # vector_k = np.arange(N)
+    # for n in range(N):
+    #     exp = np.exp(2j * np.pi * vector_k * n / N)
+    #     x[n] = (X * exp).sum()
+
+    ### method 3 (vectorization + matrix multiplication)
+    vector_k = np.arange(N)
+    vector_n = vector_k.reshape(-1, 1)
+    exp = np.exp(2j * np.pi * vector_k * vector_n / N)
+    x = np.dot(exp, X)
+    
+    return x / N
 
 
 second = 2
-fs = 100 * second  # Sampling rate
+fs = 100 * second  # Sampling rate * second
 t = np.linspace(0, second, fs)  # Time vector
 
 x = 0
@@ -28,9 +57,13 @@ for Hz in range(1, 10, 2):
     x += 1/Hz * np.sin( 2*np.pi * Hz*t )  # Input signal
 
 # Compute the Fourier transform of the signal
-X1 = fourier_transform(x) / (fs / 2)
-X2 = np.fft.fft(x) / (fs / 2)
+X1 = fourier_transform(x)
+X2 = np.fft.fft(x)
 x_recon = inverse_fourier_transform(X1)
+
+# equalize magnitude of the Fourier transform with amplitude of the signal
+X1 /= (fs / 2)
+X2 /= (fs / 2)
 
 # Plot the input signal and its Fourier transform
 fig, axs = plt.subplots(4, 1)

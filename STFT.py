@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy import signal
 
 def stft(x, window_size, hop_size):
     window = np.hanning(window_size)
@@ -37,17 +38,53 @@ def istft(stft_matrix, window_size, hop_size):
     return output
 
 
+def stft(x, fft_size=1024, hop_size=256):
+    print('input signal', x.shape)
+    w = np.hanning(fft_size)
+    # w = signal.windows.hann(fft_size, sym=False)
 
+    # Padding the signal so that frames are centered around their midpoint
+    x = np.pad(x, int(fft_size // 2), mode='reflect')
+    print('padding signal', x.shape)
 
-second = 2
-sampling_rate = 44100
+    # Window the signal
+    x_w = np.array([w * x[i:i + fft_size] for i in range(0, len(x) - fft_size, hop_size)])
+    print('window signal', x_w.shape) # = math.ceil((len(x) - fft_size) / hop_size)
+
+    # Compute the FFT
+    X = np.fft.rfft(x_w, axis=-1)
+    print('rfft', X.shape)
+
+    return X
+
+def istft(X, fft_size=1024, hop_size=256):
+    w = np.hanning(fft_size)
+    # w = signal.windows.hann(fft_size, sym=False)
+
+    # Compute the IFFT
+    x_w = np.fft.irfft(X, axis=-1)
+    print('irfft', x_w.shape)
+
+    # Overlap-add the windows
+    x = np.zeros((len(x_w)-1)*hop_size + fft_size)
+    for n,i in enumerate(range(0, len(x) - fft_size, hop_size)):
+        x[i:i+fft_size] += w * x_w[n]
+    print('overlap add', x.shape)
+
+    # Remove padding
+    x = x[int(fft_size // 2):-int(fft_size // 2)]
+    print('remove padding output signal', x.shape)
+
+    return x
+
+second = 10
+sampling_rate = 16000
 fs = sampling_rate * second  # Total number of samples
 t = np.linspace(0, second, fs)  # Time vector
 
 x = 0
 for Hz in range(1, 10, 2):
     x += 1/Hz * np.sin( 2*np.pi * Hz*t )  # Input signal
-
 
 # Compute the STFT of the test signal
 window_size = 1024

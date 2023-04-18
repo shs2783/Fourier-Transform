@@ -9,7 +9,10 @@ def fft(signal):
     even = fft(signal[0::2])
     odd = fft(signal[1::2])
 
-    ### method 1
+    # ====================================================== #
+    # ----------------- method 1 (for loop) ---------------- #
+    # ====================================================== #
+
     # spectrum = np.zeros_like(signal, dtype=np.complex128)
     # for k in range(N//2):
     #     factor = np.exp(-2j * np.pi * k / N)
@@ -17,7 +20,11 @@ def fft(signal):
     #     spectrum[k] = even[k] + T
     #     spectrum[k + N//2] = even[k] - T
 
-    ### method 2
+
+    # ====================================================== #
+    # -------------- method 2 (vectorization) -------------- #
+    # ====================================================== #
+
     factor = np.exp(-2j*np.pi * np.arange(N)/ N)
     spectrum = np.concatenate(
         [even + factor[:N//2] * odd,
@@ -35,7 +42,10 @@ def ifft(spectrum):
     even = ifft(spectrum[0::2])
     odd = ifft(spectrum[1::2])
 
-    ### method 1
+    # ====================================================== #
+    # ----------------- method 1 (for loop) ---------------- #
+    # ====================================================== #
+
     # signal = np.zeros_like(spectrum, dtype=np.complex128)
     # for k in range(N//2):
     #     factor = np.exp(2j * np.pi * k / N)
@@ -43,7 +53,11 @@ def ifft(spectrum):
     #     signal[k] = even[k] + T
     #     signal[k + N//2] = even[k] - T
     
-    ### method 2
+
+    # ====================================================== #
+    # -------------- method 2 (vectorization) -------------- #
+    # ====================================================== #
+
     factor = np.exp(2j*np.pi * np.arange(N)/ N)
     signal = np.concatenate(
         [even + factor[:N//2] * odd,
@@ -53,46 +67,48 @@ def ifft(spectrum):
     return signal
 
 
-second = 2
-sampling_rate = 128
-fs = sampling_rate * second  # Total number of samples
-t = np.linspace(0, second, fs)  # Time vector
+if __name__ == '__main__':
+    fs = 128  # Sampling rate
+    second = 2
+    num_samples = fs * second  # Total number of samples
+    t = np.linspace(0, second, num_samples)  # Time vector
 
-x = 0
-for Hz in range(1, 10, 2):
-    x += 1/Hz * np.sin( 2*np.pi * Hz*t )  # Input signal
+    x = 0
+    for Hz in range(1, 10, 2):
+        x += 1/Hz * np.sin( 2*np.pi * Hz*t )  # Input signal
 
-# Compute the Fourier transform of the signal
-X1 = fft(x)
-X2 = np.fft.fft(x)
-x_recon = ifft(X1) / len(X1)
+    # Compute the Fourier transform of the signal
+    X1 = fft(x)
+    X2 = np.fft.fft(x)
+    x_recon = ifft(X1) / len(X1)
 
-# Equalize magnitude of the Fourier transform with amplitude of the signal
-X1 /= (fs / 2)
-X2 /= (fs / 2)
+    # Equalize magnitude of the Fourier transform with amplitude of the signal
+    X1 /= (num_samples / 2)
+    X2 /= (num_samples / 2)
 
-# Plot the input signal and its Fourier transform
-fig, axs = plt.subplots(4, 1)
-axs[0].plot(t, x)
-axs[0].set_xlabel('Time (s)')
-axs[0].set_ylabel('Amplitude')
-axs[0].set_title('Original signal')
+    # Compute the frequency vector
+    freq = np.fft.fftfreq(num_samples, 1/fs)
 
-axs[1].plot(np.arange(fs), np.abs(X1))
-axs[1].set_xlabel('Frequency (Hz)')
-axs[1].set_ylabel('Magnitude')
-axs[1].set_title('Fourier transform (my function)')
+    # Plot the input signal and its Fourier transform
+    fig, axs = plt.subplots(4, 1)
+    axs[0].plot(t, x)
+    axs[0].set_xlabel('Time (s)')
+    axs[0].set_ylabel('Amplitude')
+    axs[0].set_title('Original signal')
 
-axs[2].plot(np.arange(fs), np.abs(X2))
-axs[2].set_xlabel('Frequency (Hz)')
-axs[2].set_ylabel('Magnitude')
-axs[2].set_title('Fourier transform np.fft.fft')
+    axs[1].plot(freq, np.abs(X1))
+    axs[1].set_xlabel('Frequency (Hz)')
+    axs[1].set_ylabel('Magnitude')
+    axs[1].set_title('Fourier transform (my function)')
 
-axs[3].plot(x_recon.real)
-axs[3].set_xlabel('Time (s)')
-axs[3].set_ylabel('Amplitude')
-axs[3].set_title('Reconstructed signal')
+    axs[2].plot(freq, np.abs(X2))
+    axs[2].set_xlabel('Frequency (Hz)')
+    axs[2].set_ylabel('Magnitude')
+    axs[2].set_title('Fourier transform np.fft.fft')
 
-plt.show()
+    axs[3].plot(t, x_recon.real)
+    axs[3].set_xlabel('Time (s)')
+    axs[3].set_ylabel('Amplitude')
+    axs[3].set_title('Reconstructed signal')
 
-
+    plt.show()
